@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Apply — JobHive</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: #f8fafc; color: #1e293b; }
+    nav { background: #1e293b; padding: 0 2rem;
+          display: flex; justify-content: space-between; align-items: center; }
+    .nav-brand { color: white; font-size: 1.5rem; font-weight: 800; padding: 1rem 0; }
+    .nav-brand span { color: #f59e0b; }
+    .nav-back { color: #94a3b8; text-decoration: none; padding: 0.5rem 1rem;
+                border-radius: 6px; font-size: 0.9rem; }
+    .nav-back:hover { color: white; background: #334155; }
+    .page-header { background: linear-gradient(135deg, #1e293b, #0f4c75);
+                   padding: 3rem 2rem; text-align: center; }
+    .page-header h1 { color: white; font-size: 2rem; font-weight: 800; }
+    .page-header p { color: #94a3b8; margin-top: 0.5rem; }
+    .container { max-width: 700px; margin: 2rem auto; padding: 0 1rem; }
+
+    .job-info-card { background: white; border-radius: 12px; padding: 1.5rem;
+                     margin-bottom: 1.5rem; border-left: 4px solid #f59e0b;
+                     box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+    .job-info-title { font-size: 1.3rem; font-weight: 800; color: #1e293b; }
+    .job-info-company { color: #64748b; margin-top: 0.3rem; }
+
+    .form-card { background: white; border-radius: 16px; padding: 2rem;
+                 box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+    .form-title { font-size: 1.1rem; font-weight: 700; color: #1e293b;
+                  margin-bottom: 1.5rem; padding-bottom: 1rem;
+                  border-bottom: 1px solid #e2e8f0; }
+    label { display: block; font-size: 0.85rem; font-weight: 600;
+            color: #374151; margin-bottom: 0.4rem; }
+    .required { color: #ef4444; }
+    input, textarea { width: 100%; padding: 0.8rem 1rem;
+                      border: 1.5px solid #e2e8f0; border-radius: 8px;
+                      font-size: 0.95rem; font-family: inherit;
+                      transition: border-color 0.2s; margin-bottom: 1.2rem;
+                      background: #f8fafc; }
+    input:focus, textarea:focus { outline: none; border-color: #f59e0b;
+                                   background: white; }
+    textarea { resize: vertical; min-height: 150px; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .btn-submit { width: 100%; background: linear-gradient(135deg, #f59e0b, #d97706);
+                  color: #1e293b; border: none; padding: 1rem; border-radius: 10px;
+                  font-size: 1.05rem; font-weight: 800; cursor: pointer;
+                  transition: opacity 0.2s; margin-top: 0.5rem; }
+    .btn-submit:hover { opacity: 0.9; }
+    .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+    .alert { border-radius: 10px; padding: 1rem 1.2rem; margin-top: 1rem;
+             font-size: 0.95rem; display: none; }
+    .alert-ok { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+    .alert-err { background: #fee2e2; color: #dc2626; border: 1px solid #fecaca; }
+    .success-icon { font-size: 3rem; margin-bottom: 0.5rem; }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="nav-brand">Job<span>Hive</span></div>
+    <a href="/" class="nav-back">← Back to Jobs</a>
+  </nav>
+  <div class="page-header">
+    <h1>📩 Submit Your Application</h1>
+    <p>Fill in your details and take the next step in your career</p>
+  </div>
+  <div class="container">
+    <div class="job-info-card" id="job-info" style="display:none">
+      <div class="job-info-title" id="job-title-display">-</div>
+      <div class="job-info-company" id="job-company-display">-</div>
+    </div>
+
+    <div class="form-card">
+      <div class="form-title">✏️ Application Form</div>
+      <form id="form-apply">
+        <input type="hidden" name="job_id" id="field-job-id"/>
+        <input type="hidden" name="job_title" id="field-job-title"/>
+        <input type="hidden" name="company" id="field-company"/>
+
+        <div class="row">
+          <div>
+            <label>Full Name <span class="required">*</span></label>
+            <input type="text" name="name" placeholder="Your full name" required/>
+          </div>
+          <div>
+            <label>Email Address <span class="required">*</span></label>
+            <input type="email" name="email" placeholder="your@email.com" required/>
+          </div>
+        </div>
+
+        <label>Phone Number</label>
+        <input type="tel" name="phone" placeholder="+62 8xx xxxx xxxx"/>
+
+        <label>Cover Letter</label>
+        <textarea name="cover_letter"
+          placeholder="Tell us why you are the right candidate for this position..."></textarea>
+
+        <button type="submit" class="btn-submit" id="btn-submit">
+          🚀 Submit Application
+        </button>
+      </form>
+      <div class="alert alert-ok" id="alert-ok">
+        <div class="success-icon">🎉</div>
+        <strong>Application submitted successfully!</strong><br/>
+        <span id="app-id-display"></span><br/>
+        Your application is being processed. We will contact you soon.
+      </div>
+      <div class="alert alert-err" id="alert-err"></div>
+    </div>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const jobId = params.get('job_id') || '';
+    const jobTitle = decodeURIComponent(params.get('title') || 'General Application');
+    const company = decodeURIComponent(params.get('company') || '');
+
+    document.getElementById('field-job-id').value = jobId;
+    document.getElementById('field-job-title').value = jobTitle;
+    document.getElementById('field-company').value = company;
+
+    if (jobId) {
+      document.getElementById('job-info').style.display = 'block';
+      document.getElementById('job-title-display').textContent = jobTitle;
+      document.getElementById('job-company-display').textContent = '🏢 ' + company;
+    }
+
+    document.getElementById('form-apply').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('btn-submit');
+      const alertOk = document.getElementById('alert-ok');
+      const alertErr = document.getElementById('alert-err');
+      const body = Object.fromEntries(new FormData(e.target).entries());
+
+      btn.disabled = true;
+      btn.textContent = '⏳ Submitting...';
+      alertOk.style.display = 'none';
+      alertErr.style.display = 'none';
+
+      try {
+        const res = await fetch('/api/apply', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        const data = await res.json();
+        if (data.success) {
+          document.getElementById('app-id-display').textContent =
+            'Application ID: ' + data.application_id;
+          alertOk.style.display = 'block';
+          e.target.reset();
+          document.getElementById('field-job-id').value = jobId;
+          document.getElementById('field-job-title').value = jobTitle;
+          document.getElementById('field-company').value = company;
+        } else {
+          alertErr.textContent = '❌ ' + data.message;
+          alertErr.style.display = 'block';
+        }
+      } catch (err) {
+        alertErr.textContent = '❌ Failed to submit: ' + err.message;
+        alertErr.style.display = 'block';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '🚀 Submit Application';
+      }
+    });
+  </script>
+</body>
+</html>
